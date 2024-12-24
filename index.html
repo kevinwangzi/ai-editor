@@ -172,6 +172,9 @@
                     <button onclick="copyBoth()" class="px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs sm:text-sm">
                         Copy Both
                     </button>
+                    <button onclick="clearAll()" class="px-2 sm:px-3 py-1.5 sm:py-2 bg-red-500 text-white rounded hover:bg-red-600 text-xs sm:text-sm">
+                        Clear All
+                    </button>
                 </div>
             </div>
         </div>
@@ -204,6 +207,7 @@
         
         titleInput.addEventListener('input', function() {
             titleCount.textContent = this.value.length;
+            saveDraft();
         });
 
         // Content character counter
@@ -219,7 +223,42 @@
                 quill.setContents(delta, 'silent');
                 quill.deleteText(800, length);
             }
+            saveDraft();
         });
+
+        // Draft saving and loading
+        function saveDraft() {
+            const draft = {
+                title: titleInput.value,
+                content: quill.getContents(),
+                images: Array.from(document.querySelectorAll('.image-item img')).map(img => img.src)
+            };
+            localStorage.setItem('editorDraft', JSON.stringify(draft));
+        }
+
+        function loadDraft() {
+            const draft = localStorage.getItem('editorDraft');
+            if (draft) {
+                const { title, content, images } = JSON.parse(draft);
+                titleInput.value = title;
+                titleCount.textContent = title.length;
+                quill.setContents(content);
+                
+                const gallery = document.getElementById('image-gallery');
+                images.forEach(imgSrc => {
+                    const div = document.createElement('div');
+                    div.className = 'image-item';
+                    div.innerHTML = `
+                        <img src="${imgSrc}" alt="Uploaded image" onclick="previewImage(this)">
+                        <div class="remove-image" onclick="event.stopPropagation(); removeImage(this)">×</div>
+                    `;
+                    gallery.appendChild(div);
+                });
+            }
+        }
+
+        // Load draft when page loads
+        window.addEventListener('load', loadDraft);
 
         // Image handling functions
         function handleImageUpload(event) {
@@ -234,14 +273,20 @@
                         div.className = 'image-item';
                         div.innerHTML = `
                             <img src="${e.target.result}" alt="Uploaded image" onclick="previewImage(this)">
-                            <div class="remove-image" onclick="event.stopPropagation(); this.parentElement.remove()">×</div>
+                            <div class="remove-image" onclick="event.stopPropagation(); removeImage(this)">×</div>
                         `;
                         gallery.appendChild(div);
+                        saveDraft();
                     }
                     reader.readAsDataURL(file);
                 }
             }
             event.target.value = ''; // Reset input
+        }
+
+        function removeImage(element) {
+            element.parentElement.remove();
+            saveDraft();
         }
 
         // Image preview functions
@@ -257,6 +302,18 @@
             const preview = document.getElementById('image-preview');
             preview.style.display = 'none';
             document.body.style.overflow = '';
+        }
+
+        // Clear all function
+        function clearAll() {
+            if (confirm('Are you sure you want to clear all content? This cannot be undone.')) {
+                titleInput.value = '';
+                titleCount.textContent = '0';
+                quill.setContents([]);
+                document.getElementById('image-gallery').innerHTML = '';
+                localStorage.removeItem('editorDraft');
+                showToast('All content has been cleared');
+            }
         }
 
         // Toast function
