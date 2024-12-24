@@ -257,9 +257,6 @@
                 console.log('Draft saved successfully at:', draft.savedAt);
             } catch (error) {
                 console.error('Error saving draft:', error);
-                
-                // 如果是 Safari，显示特定提示
-                showToast('保存失败，请检查浏览器设置');
             }
         }
 
@@ -416,10 +413,10 @@
         }
 
         // Prevent iOS Safari elastic scrolling
-        document.body.addEventListener('touchmove', function(e) {
-            if (e.target.closest('.ql-editor')) return;
-            e.preventDefault();
-        }, { passive: false });
+        // document.body.addEventListener('touchmove', function(e) {
+        //     if (e.target.closest('.ql-editor')) return;
+        //     e.preventDefault();
+        // }, { passive: false });
     </script>
 </body>
 </html>
