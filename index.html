@@ -232,52 +232,149 @@
         // 修改 saveDraft 函数，添加一个标志位防止初始化时的自动保存
         let isInitializing = true;
 
-        function saveDraft() {
-            // 如果是初始化阶段，不执行保存
-            if (isInitializing) return;
+        // 添加 Safari 特定的检查和处理
+        function isSafari() {
+            return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        }
 
+        function checkStorageAccess() {
+            try {
+                // 检查是否可以访问 localStorage
+                const testKey = 'testStorage';
+                localStorage.setItem(testKey, 'test');
+                const testValue = localStorage.getItem(testKey);
+                localStorage.removeItem(testKey);
+                
+                if (testValue !== 'test') {
+                    throw new Error('Storage test failed');
+                }
+                
+                return true;
+            } catch (e) {
+                console.error('Storage access error:', e);
+                
+                // Safari 特定的提示
+                if (isSafari()) {
+                    showStorageWarning();
+                }
+                
+                return false;
+            }
+        }
+
+        function showStorageWarning() {
+            const warningMessage = `
+                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white p-6 rounded-lg max-w-md">
+                        <h3 class="text-lg font-bold mb-4">Safari 存储访问受限</h3>
+                        <p class="mb-4">要启用内容自动保存功能，请：</p>
+                        <ol class="list-decimal ml-5 mb-4">
+                            <li>打开 Safari 设置</li>
+                            <li>隐私与安全性</li>
+                            <li>关闭"阻止跨站跟踪"</li>
+                            <li>允许所有 Cookie</li>
+                        </ol>
+                        <button onclick="this.parentElement.parentElement.remove()" 
+                                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                            我知道了
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            const div = document.createElement('div');
+            div.innerHTML = warningMessage;
+            document.body.appendChild(div.firstElementChild);
+        }
+
+        // 修改保存函数，添加更多错误处理
+        function saveDraft() {
+            if (isInitializing) return;
+            
             const draft = {
                 title: titleInput.value,
                 content: quill.getContents(),
-                images: Array.from(document.querySelectorAll('.image-item img')).map(img => img.src)
+                images: Array.from(document.querySelectorAll('.image-item img')).map(img => img.src),
+                savedAt: new Date().toISOString(),
+                version: '1.0' // 添加版本号便于后续升级
             };
-            localStorage.setItem('editorDraft', JSON.stringify(draft));
+
+            try {
+                const draftString = JSON.stringify(draft);
+                localStorage.setItem('editorDraft', draftString);
+                
+                // 验证保存是否成功
+                const savedDraft = localStorage.getItem('editorDraft');
+                if (savedDraft !== draftString) {
+                    throw new Error('Storage verification failed');
+                }
+                
+                console.log('Draft saved successfully at:', draft.savedAt);
+            } catch (error) {
+                console.error('Error saving draft:', error);
+                
+                // 如果是 Safari，显示特定提示
+                if (isSafari()) {
+                    showToast('内容可能无法自动保存，请检查 Safari 设置');
+                } else {
+                    showToast('保存失败，请检查浏览器设置');
+                }
+            }
         }
 
-        // 修改 loadDraft 函数
+        // 修改加载函数，添加更多错误处理
         function loadDraft() {
-            const draft = localStorage.getItem('editorDraft');
-            if (draft) {
-                try {
-                    const { title, content, images } = JSON.parse(draft);
+            if (!checkStorageAccess()) {
+                isInitializing = false;
+                return;
+            }
+
+            try {
+                const draft = localStorage.getItem('editorDraft');
+                console.log('Loading draft, found data:', !!draft);
+                
+                if (draft) {
+                    const parsedDraft = JSON.parse(draft);
+                    
+                    // 数据校验
+                    if (!parsedDraft || typeof parsedDraft !== 'object') {
+                        throw new Error('Invalid draft data');
+                    }
+
+                    const { title, content, images, savedAt } = parsedDraft;
+                    
                     titleInput.value = title || '';
                     titleCount.textContent = title ? title.length : '0';
                     quill.setContents(content || []);
                     
                     const gallery = document.getElementById('image-gallery');
                     gallery.innerHTML = '';
-                    if (images && images.length) {
+                    
+                    if (images && Array.isArray(images)) {
                         images.forEach(imgSrc => {
-                            const div = document.createElement('div');
-                            div.className = 'image-item';
-                            div.innerHTML = `
-                                <img src="${imgSrc}" alt="Uploaded image" onclick="previewImage(this)">
-                                <div class="remove-image" onclick="event.stopPropagation(); removeImage(this)">×</div>
-                            `;
-                            gallery.appendChild(div);
+                            if (imgSrc) {
+                                const div = document.createElement('div');
+                                div.className = 'image-item';
+                                div.innerHTML = `
+                                    <img src="${imgSrc}" alt="Uploaded image" onclick="previewImage(this)">
+                                    <div class="remove-image" onclick="event.stopPropagation(); removeImage(this)">×</div>
+                                `;
+                                gallery.appendChild(div);
+                            }
                         });
                     }
-                    
-                    // 所有内容加载完成后，将初始化标志设为 false
-                    setTimeout(() => {
-                        isInitializing = false;
-                    }, 0);
-                    
-                } catch (error) {
-                    console.error('Error loading draft:', error);
-                    localStorage.removeItem('editorDraft');
+
+                    if (savedAt) {
+                        const saveTime = new Date(savedAt).toLocaleString();
+                        console.log('Content loaded from:', saveTime);
+                        showToast(`已加载保存于 ${saveTime} 的内容`);
+                    }
                 }
-            } else {
+            } catch (error) {
+                console.error('Error loading draft:', error);
+                showToast('加载保存的内容时出错');
+                localStorage.removeItem('editorDraft'); // 清除可能损坏的数据
+            } finally {
                 isInitializing = false;
             }
         }
