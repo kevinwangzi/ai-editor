@@ -58,17 +58,20 @@
         }
         /* 优化移动端按钮布局 */
         @media (max-width: 640px) {
-            .space-x-2 {
+            .button-group {
                 display: grid;
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(2, 1fr);
                 gap: 0.5rem;
                 width: 100%;
             }
-            .space-x-2 button {
+            .button-group button {
                 width: 100%;
-                padding: 0.5rem !important;
-                font-size: 12px !important;
+                padding: 0.75rem !important;
+                font-size: 14px !important;
                 white-space: nowrap;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
         }
         .image-gallery {
@@ -162,7 +165,7 @@
                 <div class="text-xs sm:text-sm text-gray-500">
                     <span id="contentCount">0</span>/800 characters
                 </div>
-                <div class="space-x-2 w-full sm:w-auto">
+                <div class="button-group w-full sm:w-auto">
                     <button onclick="copyTitle()" class="px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs sm:text-sm">
                         Copy Title
                     </button>
@@ -226,8 +229,13 @@
             saveDraft();
         });
 
-        // Draft saving and loading
+        // 修改 saveDraft 函数，添加一个标志位防止初始化时的自动保存
+        let isInitializing = true;
+
         function saveDraft() {
+            // 如果是初始化阶段，不执行保存
+            if (isInitializing) return;
+
             const draft = {
                 title: titleInput.value,
                 content: quill.getContents(),
@@ -236,29 +244,46 @@
             localStorage.setItem('editorDraft', JSON.stringify(draft));
         }
 
+        // 修改 loadDraft 函数
         function loadDraft() {
             const draft = localStorage.getItem('editorDraft');
             if (draft) {
-                const { title, content, images } = JSON.parse(draft);
-                titleInput.value = title;
-                titleCount.textContent = title.length;
-                quill.setContents(content);
-                
-                const gallery = document.getElementById('image-gallery');
-                images.forEach(imgSrc => {
-                    const div = document.createElement('div');
-                    div.className = 'image-item';
-                    div.innerHTML = `
-                        <img src="${imgSrc}" alt="Uploaded image" onclick="previewImage(this)">
-                        <div class="remove-image" onclick="event.stopPropagation(); removeImage(this)">×</div>
-                    `;
-                    gallery.appendChild(div);
-                });
+                try {
+                    const { title, content, images } = JSON.parse(draft);
+                    titleInput.value = title || '';
+                    titleCount.textContent = title ? title.length : '0';
+                    quill.setContents(content || []);
+                    
+                    const gallery = document.getElementById('image-gallery');
+                    gallery.innerHTML = '';
+                    if (images && images.length) {
+                        images.forEach(imgSrc => {
+                            const div = document.createElement('div');
+                            div.className = 'image-item';
+                            div.innerHTML = `
+                                <img src="${imgSrc}" alt="Uploaded image" onclick="previewImage(this)">
+                                <div class="remove-image" onclick="event.stopPropagation(); removeImage(this)">×</div>
+                            `;
+                            gallery.appendChild(div);
+                        });
+                    }
+                    
+                    // 所有内容加载完成后，将初始化标志设为 false
+                    setTimeout(() => {
+                        isInitializing = false;
+                    }, 0);
+                    
+                } catch (error) {
+                    console.error('Error loading draft:', error);
+                    localStorage.removeItem('editorDraft');
+                }
+            } else {
+                isInitializing = false;
             }
         }
 
         // Load draft when page loads
-        window.addEventListener('load', loadDraft);
+        document.addEventListener('DOMContentLoaded', loadDraft);
 
         // Image handling functions
         function handleImageUpload(event) {
