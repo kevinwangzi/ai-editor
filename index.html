@@ -214,6 +214,39 @@
                 padding: 0.625rem !important;
             }
         }
+
+        .nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            border: none;
+            padding: 16px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            border-radius: 4px;
+        }
+
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .prev {
+            left: 20px;
+        }
+
+        .next {
+            right: 20px;
+        }
+
+        @media (max-width: 640px) {
+            .nav-button {
+                padding: 12px;
+                font-size: 18px;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen p-2 sm:p-8">
@@ -271,7 +304,9 @@
 
     <!-- Image preview modal -->
     <div id="image-preview" class="image-preview" onclick="closeImagePreview()">
-        <img id="preview-image" src="" alt="Preview">
+        <button class="nav-button prev" onclick="event.stopPropagation(); navigateImage(-1)">❮</button>
+        <img id="preview-image" src="" alt="Preview" onclick="event.stopPropagation()">
+        <button class="nav-button next" onclick="event.stopPropagation(); navigateImage(1)">❯</button>
     </div>
 
     <script>
@@ -428,13 +463,40 @@
         }
 
         // Image preview functions
+        let currentImageIndex = 0;
+
         function previewImage(img) {
             const preview = document.getElementById('image-preview');
             const previewImg = document.getElementById('preview-image');
+            const allImages = Array.from(document.querySelectorAll('.image-item img'));
+            currentImageIndex = allImages.indexOf(img);
             previewImg.src = img.src;
             preview.style.display = 'flex';
             document.body.style.overflow = 'hidden';
         }
+
+        function navigateImage(direction) {
+            const allImages = Array.from(document.querySelectorAll('.image-item img'));
+            if (allImages.length <= 1) return;
+
+            currentImageIndex = (currentImageIndex + direction + allImages.length) % allImages.length;
+            const previewImg = document.getElementById('preview-image');
+            previewImg.src = allImages[currentImageIndex].src;
+        }
+
+        // 添加键盘导航支持
+        document.addEventListener('keydown', function(e) {
+            const preview = document.getElementById('image-preview');
+            if (preview.style.display === 'flex') {
+                if (e.key === 'ArrowLeft') {
+                    navigateImage(-1);
+                } else if (e.key === 'ArrowRight') {
+                    navigateImage(1);
+                } else if (e.key === 'Escape') {
+                    closeImagePreview();
+                }
+            }
+        });
 
         function closeImagePreview() {
             const preview = document.getElementById('image-preview');
