@@ -157,6 +157,8 @@
         .ql-container {
             border-radius: 0 0 0.5rem 0.5rem;
             border-color: #e5e7eb !important;
+            height: 350px !important;
+            overflow: hidden !important;
         }
 
         .ql-editor {
@@ -164,6 +166,8 @@
             font-size: 16px;
             line-height: 1.8;
             min-height: 350px;
+            height: 350px !important;
+            overflow-y: auto !important;
         }
 
         /* 优化按钮样式 */
@@ -204,9 +208,14 @@
 
         /* 移动端优化 */
         @media (max-width: 640px) {
+            .ql-container {
+                height: 300px !important;
+            }
+            
             .ql-editor {
                 padding: 1rem !important;
                 min-height: 300px;
+                height: 300px !important;
                 font-size: 16px;
             }
 
