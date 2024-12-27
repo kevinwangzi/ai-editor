@@ -158,7 +158,7 @@
         .ql-container {
             border-radius: 0 0 0.5rem 0.5rem;
             border-color: #e5e7eb !important;
-            height: 350px !important;
+            height: 450px !important;
             overflow: hidden !important;
         }
 
@@ -166,8 +166,8 @@
             padding: 1.5rem !important;
             font-size: 16px;
             line-height: 1.8;
-            min-height: 350px;
-            height: 350px !important;
+            min-height: 450px;
+            height: 450px !important;
             overflow-y: auto !important;
         }
 
@@ -210,13 +210,13 @@
         /* 移动端优化 */
         @media (max-width: 640px) {
             .ql-container {
-                height: 300px !important;
+                height: 350px !important;
             }
             
             .ql-editor {
                 padding: 1rem !important;
-                min-height: 300px;
-                height: 300px !important;
+                min-height: 350px;
+                height: 350px !important;
                 font-size: 16px;
             }
 
@@ -295,7 +295,7 @@
             <div id="editor" class="h-64 sm:h-96 mb-2"></div>
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
                 <div class="text-xs sm:text-sm text-gray-500">
-                    <span id="contentCount">0</span>/800 characters
+                    <span id="contentCount">0</span>/1500 characters
                 </div>
                 <div class="button-group w-full sm:w-auto gap-3">
                     <button onclick="copyTitle()" class="px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs sm:text-sm">
@@ -329,7 +329,7 @@
         // Initialize Quill editor
         var quill = new Quill('#editor', {
             theme: 'snow',
-            placeholder: 'Enter content (max 800 characters)',
+            placeholder: 'Enter content (max 1500 characters)',
             modules: {
                 toolbar: [
                     ['bold', 'italic', 'underline'],
@@ -365,10 +365,10 @@
             const length = text.length - 1; // Subtract 1 to account for trailing newline
             contentCount.textContent = length;
             
-            if (length > 800) {
+            if (length > 1500) {
                 const delta = quill.getContents();
                 quill.setContents(delta, 'silent');
-                quill.deleteText(800, length);
+                quill.deleteText(1500, length);
             }
             saveDraft();
         });
