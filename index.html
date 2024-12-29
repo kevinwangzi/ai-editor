@@ -453,7 +453,6 @@
         function setupMobileInputHandling() {
             let isKeyboardVisible = false;
             
-            // 检测键盘状态
             window.addEventListener('resize', () => {
                 const currentHeight = window.innerHeight;
                 if (currentHeight < window.outerHeight) {
@@ -463,7 +462,7 @@
                 }
             });
 
-            // 处理编辑器焦点和光标位置
+            // 更新光标位置处理逻辑
             quill.on('selection-change', function(range) {
                 if (!range) return;
                 
@@ -472,21 +471,25 @@
                     const editorRect = quill.container.getBoundingClientRect();
                     const cursorPosition = editorRect.top + bounds.top;
                     const viewportHeight = window.innerHeight;
-                    const keyboardHeight = viewportHeight * 0.4; // 估计键盘高度约为视口高度的40%
+                    const keyboardHeight = viewportHeight * 0.4;
                     
-                    // 计算理想的滚动位置，确保光标在键盘上方
-                    const idealPosition = cursorPosition - (viewportHeight - keyboardHeight) + bounds.height + 50;
+                    // 调整这里的值使光标位置更靠上
+                    // 现在光标会位于键盘上方约 1/3 处的位置
+                    const targetPosition = (viewportHeight - keyboardHeight) * 0.33;
                     
-                    if (cursorPosition > (viewportHeight - keyboardHeight - 50)) {
+                    // 计算需要滚动的距离
+                    const scrollAmount = cursorPosition - targetPosition;
+                    
+                    if (cursorPosition > targetPosition) {
                         window.scrollTo({
-                            top: window.pageYOffset + idealPosition,
+                            top: window.pageYOffset + scrollAmount,
                             behavior: 'smooth'
                         });
                     }
                 });
             });
 
-            // 处理文本变化时的滚动
+            // 文本变化时的处理也相应调整
             quill.on('text-change', function() {
                 const selection = quill.getSelection();
                 if (selection) {
@@ -495,10 +498,12 @@
                     const cursorPosition = editorRect.top + bounds.top;
                     const viewportHeight = window.innerHeight;
                     const keyboardHeight = viewportHeight * 0.4;
+                    const targetPosition = (viewportHeight - keyboardHeight) * 0.33;
                     
-                    if (cursorPosition > (viewportHeight - keyboardHeight - 50)) {
+                    if (cursorPosition > targetPosition) {
+                        const scrollAmount = cursorPosition - targetPosition;
                         window.scrollTo({
-                            top: window.pageYOffset + 50,
+                            top: window.pageYOffset + scrollAmount,
                             behavior: 'smooth'
                         });
                     }
