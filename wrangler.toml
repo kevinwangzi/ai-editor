@@ -1,0 +1,12 @@
+name = "ai-editor"
+main = "src/index.ts"  # 或者你的入口文件
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"  # 这是在代码中使用的绑定名称
+database_name = "article-db"
+database_id = "f178ea14-3b24-4b06-be5f-9b27dc269c04"  # 这是你的数据库 UUID 
+
+[[r2_buckets]]
+binding = "article_images"  # 在代码中使用的绑定名称
+bucket_name = "article-images"  # 你刚创建的存储桶名称 
