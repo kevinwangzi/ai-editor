@@ -133,8 +133,8 @@
         }
         /* 优化整体容器样式 */
         .max-w-4xl {
-            margin: 0 auto;
-            padding: 1rem 1rem calc(env(safe-area-inset-bottom) + 180px) 1rem; /* 为底部按钮预留空间 */
+            margin: 0;
+            padding: 1rem;
             min-height: 100vh;
             box-sizing: border-box;
         }
@@ -509,12 +509,16 @@
         function setupMobileInputHandling() {
             let isKeyboardVisible = false;
             
+            // 检测键盘状态
             window.addEventListener('resize', () => {
                 const currentHeight = window.innerHeight;
                 if (currentHeight < window.outerHeight) {
                     isKeyboardVisible = true;
+                    // 键盘显示时，调整按钮容器位置
+                    document.querySelector('.button-container').style.bottom = `${currentHeight * 0.4}px`;
                 } else {
                     isKeyboardVisible = false;
+                    document.querySelector('.button-container').style.bottom = '0';
                 }
             });
 
@@ -527,43 +531,20 @@
                     const editorRect = quill.container.getBoundingClientRect();
                     const cursorPosition = editorRect.top + bounds.top;
                     const viewportHeight = window.innerHeight;
-                    const keyboardHeight = viewportHeight * 0.4;
                     
-                    // 调整这里的值使光标位置更靠上
-                    // 现在光标会位于键盘上方约 1/3 处的位置
-                    const targetPosition = (viewportHeight - keyboardHeight) * 0.33;
+                    // 将光标位置设置在屏幕约 1/4 处
+                    const targetPosition = viewportHeight * 0.25;
                     
                     // 计算需要滚动的距离
                     const scrollAmount = cursorPosition - targetPosition;
                     
-                    if (cursorPosition > targetPosition) {
+                    if (Math.abs(scrollAmount) > 10) { // 添加一个阈值，避免微小调整
                         window.scrollTo({
                             top: window.pageYOffset + scrollAmount,
                             behavior: 'smooth'
                         });
                     }
                 });
-            });
-
-            // 文本变化时的处理也相应调整
-            quill.on('text-change', function() {
-                const selection = quill.getSelection();
-                if (selection) {
-                    const bounds = quill.getBounds(selection.index);
-                    const editorRect = quill.container.getBoundingClientRect();
-                    const cursorPosition = editorRect.top + bounds.top;
-                    const viewportHeight = window.innerHeight;
-                    const keyboardHeight = viewportHeight * 0.4;
-                    const targetPosition = (viewportHeight - keyboardHeight) * 0.33;
-                    
-                    if (cursorPosition > targetPosition) {
-                        const scrollAmount = cursorPosition - targetPosition;
-                        window.scrollTo({
-                            top: window.pageYOffset + scrollAmount,
-                            behavior: 'smooth'
-                        });
-                    }
-                }
             });
         }
 
