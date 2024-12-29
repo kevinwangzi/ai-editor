@@ -290,6 +290,16 @@
                 height: 32px;
             }
         }
+
+        /* 定义自定义样式类 */
+        .ql-editor p {
+            margin: 0;  /* 重置默认边距 */
+            line-height: 1.5;  /* 基础行高 */
+        }
+
+        .ql-editor p + p {
+            margin-top: 1.5em;  /* 段落之间的间距为正常行高的1.5倍 */
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen p-2 sm:p-8">
@@ -413,7 +423,7 @@
                 content: quill.getContents(),
                 images: Array.from(document.querySelectorAll('.image-item img')).map(img => img.src),
                 savedAt: new Date().toISOString(),
-                version: '1.0' // 添加��本号便于后续升级
+                version: '1.0' // 添加版本号便于后续升级
             };
 
             try {
