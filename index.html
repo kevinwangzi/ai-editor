@@ -133,8 +133,10 @@
         }
         /* 优化整体容器样式 */
         .max-w-4xl {
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-            border: 1px solid #f3f4f6;
+            margin: 0 auto;
+            padding: 1rem 1rem calc(env(safe-area-inset-bottom) + 180px) 1rem; /* 为底部按钮预留空间 */
+            min-height: 100vh;
+            box-sizing: border-box;
         }
 
         /* 优化输入框样式 */
@@ -358,6 +360,60 @@
         .ql-editor {
             scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
+        }
+
+        /* 字数统计样式优化 */
+        .character-count {
+            font-size: 0.875rem;
+            color: #666;
+            padding: 0.5rem 0;
+        }
+
+        /* 编辑器容器样式优化 */
+        .ql-container {
+            border: none !important;
+            font-size: 16px !important; /* 移动端更合适的字体大小 */
+        }
+
+        .ql-editor {
+            padding: 1rem !important;
+            min-height: calc(100vh - 300px) !important; /* 减去按钮和其他元素的高度 */
+        }
+
+        /* 底部按钮容器样式 */
+        .button-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            padding: 1rem;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            padding-bottom: calc(1rem + env(safe-area-inset-bottom)); /* 适配 iPhone X 及以上机型 */
+        }
+
+        /* 按钮样式优化 */
+        .button-container button {
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* 针对不同设备的优化 */
+        @media (max-width: 640px) {
+            .max-w-4xl {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            
+            .ql-editor {
+                font-size: 16px !important; /* 确保移动端不会自动缩放 */
+            }
         }
     </style>
 </head>
