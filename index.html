@@ -300,6 +300,43 @@
         .ql-editor p + p {
             margin-top: 1.5em;  /* 段落之间的间距为正常行高的1.5倍 */
         }
+
+        /* 优化移动端触摸体验 */
+        @media (max-width: 640px) {
+            /* 优化滚动行为 */
+            .ql-editor {
+                -webkit-overflow-scrolling: touch; /* 使 iOS 滚动更流畅 */
+                scroll-behavior: smooth;
+            }
+            
+            /* 禁用文本选择时的放大镜效果 */
+            * {
+                -webkit-touch-callout: none;
+            }
+            
+            /* 输入框激活状态优化 */
+            input:focus, 
+            .ql-editor:focus {
+                -webkit-tap-highlight-color: transparent;
+            }
+        }
+
+        /* 优化键盘弹出时的布局 */
+        @media (max-width: 640px) and (max-height: 600px) {
+            .max-w-4xl {
+                margin-top: 0;
+                margin-bottom: 0;
+            }
+            
+            .ql-container {
+                height: 250px !important; /* 键盘弹出时减小编辑器高度 */
+            }
+            
+            .ql-editor {
+                height: 250px !important;
+                min-height: 250px;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen p-2 sm:p-8">
@@ -390,9 +427,65 @@
         const titleInput = document.getElementById('title');
         const titleCount = document.getElementById('titleCount');
         
+        // 优化移动端输入体验
+        function setupMobileInputHandling() {
+            let lastScrollTop = 0;
+            let isKeyboardVisible = false;
+            
+            // 检测键盘状态
+            window.addEventListener('resize', () => {
+                const currentHeight = window.innerHeight;
+                if (currentHeight < window.outerHeight) {
+                    isKeyboardVisible = true;
+                } else {
+                    isKeyboardVisible = false;
+                }
+            });
+
+            // 优化滚动处理
+            window.addEventListener('scroll', () => {
+                if (isKeyboardVisible) {
+                    lastScrollTop = window.pageYOffset;
+                }
+            });
+
+            // 处理编辑器焦点
+            quill.on('selection-change', function(range) {
+                if (!range || !isKeyboardVisible) return;
+                
+                requestAnimationFrame(() => {
+                    const bounds = quill.getBounds(range.index);
+                    const editorTop = quill.container.getBoundingClientRect().top;
+                    const targetPosition = editorTop + bounds.top - 100; // 100px 缓冲区
+                    
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        }
+
+        // 防抖函数优化保存
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // 优化自动保存
+        const debouncedSave = debounce(saveDraft, 1000);
+        
+        // 更新现有的事件监听器
         titleInput.addEventListener('input', function() {
             titleCount.textContent = this.value.length;
-            saveDraft();
+            debouncedSave();
         });
 
         // Content character counter
@@ -400,7 +493,7 @@
         
         quill.on('text-change', function() {
             const text = quill.getText();
-            const length = text.length - 1; // Subtract 1 to account for trailing newline
+            const length = text.length - 1;
             contentCount.textContent = length;
             
             if (length > 1500) {
@@ -408,7 +501,7 @@
                 quill.setContents(delta, 'silent');
                 quill.deleteText(1500, length);
             }
-            saveDraft();
+            debouncedSave();
         });
 
         // 修改 saveDraft 函数，添加一个标志位防止初始化时的自动保存
@@ -652,6 +745,34 @@
                 }
             }
         }
+
+        // 初始化移动端优化
+        if ('ontouchstart' in window) {
+            setupMobileInputHandling();
+        }
+
+        // 添加错误恢复机制
+        window.addEventListener('error', function(e) {
+            console.error('页面错误:', e.error);
+            showToast('发生错误，正在尝试恢复...');
+            
+            // 尝试恢复编辑器状态
+            try {
+                quill.enable(true);
+                titleInput.disabled = false;
+            } catch (err) {
+                console.error('恢复失败:', err);
+            }
+        });
+
+        // 优化页面可见性变化处理
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                // 页面重新可见时，确保编辑器状态正确
+                quill.enable(true);
+                loadDraft(); // 重新加载最新的草稿
+            }
+        });
 
     </script>
 </body>
