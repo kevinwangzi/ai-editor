@@ -366,11 +366,9 @@
             .max-w-4xl {
                 margin: 0;
                 padding: 0;
-                height: 100vh;
-                display: flex;
-                flex-direction: column;
-                border-radius: 0;
-                background-color: transparent;
+                width: 100%;
+                max-width: 100vw;
+                overflow-x: hidden;
             }
 
             /* 编辑器容器样式 */
@@ -563,6 +561,86 @@
                 opacity: 0.8;
             }
         }
+
+        /* 修复移动端布局和图片预览问题 */
+        @media (max-width: 640px) {
+            /* 移除右侧空白 */
+            body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                max-width: 100vw;
+                overflow-x: hidden;
+            }
+
+            .max-w-4xl {
+                margin: 0;
+                padding: 0.5rem;
+                width: 100%;
+                max-width: 100%;
+                border-radius: 0;
+            }
+
+            /* 优化图片预览样式 */
+            .image-preview {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.9);
+                z-index: 2000;
+                display: none;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+
+            /* 添加关闭按钮 */
+            .close-preview {
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+                color: white;
+                font-size: 2rem;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(0, 0, 0, 0.5);
+                border-radius: 50%;
+                z-index: 2001;
+            }
+
+            /* 优化预览图片大小 */
+            .image-preview img {
+                max-width: 90vw;
+                max-height: 80vh;
+                object-fit: contain;
+            }
+
+            /* 添加导航按钮样式 */
+            .nav-button {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                background: rgba(0, 0, 0, 0.5);
+                color: white;
+                padding: 1rem;
+                border: none;
+                font-size: 1.5rem;
+                z-index: 2001;
+            }
+
+            .prev {
+                left: 1rem;
+            }
+
+            .next {
+                right: 1rem;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen p-2 sm:p-8">
@@ -613,7 +691,7 @@
     <div id="toast" class="toast text-sm"></div>
 
     <!-- Image preview modal -->
-    <div id="image-preview" class="image-preview">
+    <div id="image-preview" class="image-preview" onclick="closeImagePreview()">
         <div class="close-preview" onclick="closeImagePreview()">×</div>
         <button class="nav-button prev" onclick="event.stopPropagation(); navigateImage(-1)">❮</button>
         <img id="preview-image" src="" alt="Preview" onclick="event.stopPropagation()">
@@ -981,15 +1059,13 @@
         }, false);
         
         function handleSwipe() {
-            const swipeThreshold = 50; // Minimum distance for a swipe
+            const swipeThreshold = 50;
             const swipeDistance = touchEndX - touchStartX;
             
             if (Math.abs(swipeDistance) > swipeThreshold) {
                 if (swipeDistance > 0) {
-                    // Swiped right - show previous image
                     navigateImage(-1);
                 } else {
-                    // Swiped left - show next image
                     navigateImage(1);
                 }
             }
