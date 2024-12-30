@@ -154,7 +154,7 @@
             }
         }
 
-        /* 确保内容区域不会过度拉伸 */
+        /* 优化编辑器容器样式 */
         #editor-container {
             flex: 1;
             display: flex;
@@ -184,15 +184,15 @@
         
         .ql-container {
             height: auto !important;
-            min-height: 250px !important;
-            max-height: calc(100vh - 300px) !important; /* 减去其他UI元素的高度 */
+            min-height: 150px !important;
+            max-height: 40vh !important;
             overflow-y: auto !important;
         }
 
         .ql-editor {
             height: auto !important;
-            min-height: 250px !important;
-            padding-bottom: 50vh !important; /* 为键盘预留足够空间 */
+            min-height: 150px !important;
+            padding-bottom: calc(20px + 80px) !important; /* 增加底部padding，为按钮留出空间 */
         }
 
         /* 优化按钮样式 */
@@ -239,11 +239,13 @@
             }
 
             .ql-container {
-                max-height: calc(100vh - 250px) !important; /* 调整最大高度 */
+                min-height: 120px !important;
+                max-height: 35vh !important;
             }
 
             .ql-editor {
-                font-size: 16px !important; /* 防止iOS自动缩放 */
+                min-height: 120px !important;
+                font-size: 16px !important;
             }
 
             /* 确保内容区域在键盘弹出时可见 */
@@ -300,6 +302,20 @@
             font-weight: 500;
         }
 
+        /* 确保内容区域不会被按钮遮挡 */
+        .ql-container {
+            height: auto !important;
+            min-height: 150px !important;
+            max-height: 40vh !important;
+            overflow-y: auto !important;
+        }
+
+        .ql-editor {
+            height: auto !important;
+            min-height: 150px !important;
+            padding-bottom: calc(20px + 80px) !important; /* 增加底部padding，为按钮留出空间 */
+        }
+
         /* 针对不同设备的优化 */
         @media (max-width: 640px) {
             .max-w-4xl {
@@ -323,6 +339,32 @@
             .button-like:active {
                 transform: scale(0.96);
                 opacity: 0.8;
+            }
+        }
+
+        /* 优化移动端键盘交互的样式 */
+        @media (max-width: 640px) {
+            body {
+                min-height: 100vh;
+                /* 移除固定的 padding-bottom，改为动态调整 */
+            }
+
+            .ql-container {
+                /* 调整编辑器容器的最大高度，使其更灵活 */
+                max-height: none !important;
+                height: auto !important;
+            }
+
+            .ql-editor {
+                /* 移除固定的 padding-bottom，改为动态调整 */
+                padding-bottom: 20px !important;
+                min-height: 200px !important;
+            }
+
+            /* 添加一个固定在底部的占位符，用于键盘弹出时 */
+            .keyboard-spacer {
+                height: 0;
+                transition: height 0.3s;
             }
         }
     </style>
@@ -455,6 +497,31 @@
                         });
                     }
                 });
+            });
+
+            // 监听文本变化，处理换行和长文本输入
+            quill.on('text-change', function() {
+                if (!isKeyboardVisible) return;
+                
+                const selection = quill.getSelection();
+                if (selection) {
+                    const bounds = quill.getBounds(selection.index);
+                    const editorRect = quill.container.getBoundingClientRect();
+                    const cursorPosition = editorRect.top + bounds.top;
+                    const viewportHeight = window.innerHeight;
+                    const keyboardHeight = window.outerHeight - viewportHeight;
+                    
+                    // 确保光标总是在键盘上方可见区域的中间位置
+                    const visibleAreaHeight = viewportHeight - keyboardHeight;
+                    const targetPosition = visibleAreaHeight * 0.3; // 将光标保持在可见区域的30%处
+                    
+                    if (cursorPosition > targetPosition) {
+                        window.scrollTo({
+                            top: window.pageYOffset + (cursorPosition - targetPosition),
+                            behavior: 'smooth'
+                        });
+                    }
+                }
             });
         }
 
@@ -738,33 +805,77 @@
             }
         }
 
-        // 添加键盘处理逻辑
+        // 添加键盘交互处理函数
         function setupMobileKeyboardHandling() {
             const visualViewport = window.visualViewport;
+            const editor = document.querySelector('#editor');
+            const spacer = document.createElement('div');
+            spacer.className = 'keyboard-spacer';
+            document.body.appendChild(spacer);
             
             if (visualViewport) {
                 visualViewport.addEventListener('resize', () => {
-                    if (visualViewport.height < window.innerHeight) {
+                    const isKeyboardVisible = visualViewport.height < window.innerHeight;
+                    
+                    if (isKeyboardVisible) {
                         // 键盘弹出时
-                        const scrollElement = quill.container.querySelector('.ql-editor');
-                        const selection = quill.getSelection();
+                        const keyboardHeight = window.innerHeight - visualViewport.height;
+                        spacer.style.height = `${keyboardHeight}px`;
                         
+                        // 获取当前光标位置
+                        const selection = quill.getSelection();
                         if (selection) {
-                            // 延迟执行以确保光标位置更新
-                            setTimeout(() => {
+                            requestAnimationFrame(() => {
                                 const bounds = quill.getBounds(selection.index);
-                                scrollElement.scrollTop = bounds.top - 100; // 保持光标上方有一定空间
-                            }, 100);
+                                const editorRect = editor.getBoundingClientRect();
+                                const cursorY = editorRect.top + bounds.top;
+                                
+                                // 计算理想的光标位置（视口高度的1/3处）
+                                const idealPosition = visualViewport.height / 3;
+                                
+                                // 如果光标位置不在理想位置，进行滚动
+                                if (cursorY > idealPosition) {
+                                    window.scrollTo({
+                                        top: window.scrollY + (cursorY - idealPosition),
+                                        behavior: 'smooth'
+                                    });
+                                }
+                            });
                         }
+                    } else {
+                        // 键盘收起时
+                        spacer.style.height = '0';
+                        // 可选：滚动回原位置
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                     }
                 });
             }
+
+            // 监听编辑器焦点事件
+            quill.on('selection-change', function(range) {
+                if (range && visualViewport.height < window.innerHeight) {
+                    // 当有选区且键盘可见时，确保光标可见
+                    const bounds = quill.getBounds(range.index);
+                    const editorRect = editor.getBoundingClientRect();
+                    const cursorY = editorRect.top + bounds.top;
+                    const idealPosition = visualViewport.height / 3;
+                    
+                    if (cursorY > idealPosition) {
+                        window.scrollTo({
+                            top: window.scrollY + (cursorY - idealPosition),
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            });
         }
 
-        // 初始化时调用
-        if ('ontouchstart' in window) {
-            setupMobileKeyboardHandling();
-        }
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            if ('ontouchstart' in window) {
+                setupMobileKeyboardHandling();
+            }
+        });
 
         // 添加错误恢复机制
         window.addEventListener('error', function(e) {
