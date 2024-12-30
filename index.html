@@ -415,6 +415,20 @@
                 font-size: 16px !important; /* 确保移动端不会自动缩放 */
             }
         }
+
+        /* 按钮触摸反馈 */
+        @media (max-width: 640px) {
+            button, 
+            .button-like {
+                transition: transform 0.1s, opacity 0.1s;
+            }
+            
+            button:active,
+            .button-like:active {
+                transform: scale(0.96);
+                opacity: 0.8;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen p-2 sm:p-8">
