@@ -454,6 +454,115 @@
                 padding: 0 !important;
             }
         }
+
+        /* 添加新的按钮样式 */
+        .btn {
+            @apply px-4 py-3 rounded-lg text-white text-sm font-medium transition-all;
+            background-color: #007AFF;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-danger {
+            background-color: #FF3B30;
+        }
+
+        /* 移动端特定样式 */
+        @media (max-width: 640px) {
+            .button-group {
+                padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+            }
+            
+            /* 为固定定位的按钮组留出空间 */
+            .ql-editor {
+                padding-bottom: calc(1rem + 180px) !important;
+            }
+            
+            /* 优化内容区域的滚动 */
+            .max-w-4xl {
+                padding-bottom: 180px;
+            }
+        }
+
+        /* 确保按钮在桌面端正常显示 */
+        @media (min-width: 641px) {
+            .button-group {
+                position: static;
+                padding: 0;
+                box-shadow: none;
+            }
+            
+            .button-group .grid {
+                grid-template-columns: repeat(4, auto);
+            }
+        }
+
+        /* 仅针对移动端的样式调整 */
+        @media (max-width: 640px) {
+            /* 编辑器容器样式 */
+            #editor-container {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: white;
+                border-top-left-radius: 16px;
+                border-top-right-radius: 16px;
+                box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+                transition: transform 0.3s ease-out;
+            }
+
+            /* 按钮组样式 */
+            .button-group {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: white;
+                padding: 1rem;
+                padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+                box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+                z-index: 1000;
+            }
+
+            .button-group .grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+                max-width: 100%;
+            }
+
+            /* 为固定按钮组预留空间 */
+            .ql-editor {
+                padding-bottom: calc(1rem + 180px) !important;
+            }
+
+            /* 优化内容区域的滚动 */
+            .max-w-4xl {
+                padding-bottom: 180px;
+            }
+
+            /* 按钮样式优化 */
+            .btn {
+                width: 100%;
+                padding: 0.75rem !important;
+                font-size: 14px !important;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 8px;
+            }
+
+            /* 按钮触摸反馈 */
+            .btn:active {
+                transform: scale(0.96);
+                opacity: 0.8;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen p-2 sm:p-8">
@@ -488,19 +597,13 @@
                 <div class="text-xs sm:text-sm text-gray-500">
                     <span id="contentCount">0</span>/1500 characters
                 </div>
-                <div class="button-group w-full sm:w-auto gap-3">
-                    <button onclick="copyTitle()" class="px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs sm:text-sm">
-                        Copy Title
-                    </button>
-                    <button onclick="copyContent()" class="px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs sm:text-sm">
-                        Copy Content
-                    </button>
-                    <button onclick="copyBoth()" class="px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs sm:text-sm">
-                        Copy Both
-                    </button>
-                    <button onclick="clearAll()" class="px-2 sm:px-3 py-1.5 sm:py-2 bg-red-500 text-white rounded hover:bg-red-600 text-xs sm:text-sm">
-                        Clear All
-                    </button>
+                <div class="button-group fixed bottom-0 left-0 right-0 bg-white sm:relative sm:bg-transparent p-4 sm:p-0 shadow-lg sm:shadow-none">
+                    <div class="grid grid-cols-2 gap-2 max-w-lg mx-auto">
+                        <button onclick="copyTitle()" class="btn">Copy Title</button>
+                        <button onclick="copyContent()" class="btn">Copy Content</button>
+                        <button onclick="copyBoth()" class="btn">Copy Both</button>
+                        <button onclick="clearAll()" class="btn btn-danger">Clear All</button>
+                    </div>
                 </div>
             </div>
         </div>
